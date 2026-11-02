@@ -54,7 +54,7 @@ export default function AdminUsersCrudTab({
 
   // Bulk Student Import Modal
   const [showBulkModal, setShowBulkModal] = useState(false);
-  const [bulkClass, setBulkClass] = useState(classes[0]?.name || '');
+  const [bulkClass, setBulkClass] = useState('');
   const [bulkDefaultPassword, setBulkDefaultPassword] = useState('Medika2026!');
   const [bulkText, setBulkText] = useState('');
   const [savingBulk, setSavingBulk] = useState(false);
@@ -63,6 +63,19 @@ export default function AdminUsersCrudTab({
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+
+  const availableClassNames = useMemo(() => {
+    const names = new Set<string>();
+    profiles.forEach((p) => {
+      if (p.role === 'student' && p.class_name?.trim()) {
+        names.add(p.class_name.trim());
+      }
+    });
+    classes.forEach((c) => {
+      if (c.name?.trim()) names.add(c.name.trim());
+    });
+    return Array.from(names).sort((a, b) => a.localeCompare(b, 'id'));
+  }, [classes, profiles]);
 
   const attemptCountByUser = useMemo(() => {
     const map = new Map<string, number>();
@@ -94,7 +107,7 @@ export default function AdminUsersCrudTab({
     setFormPassword('');
     setFormName('');
     setFormNim('');
-    setFormClass(defaultRole === 'student' ? classes[0]?.name || '' : '');
+    setFormClass('');
     setFormPhone('');
     setFormActive(true);
     setShowUserModal(true);
@@ -107,7 +120,7 @@ export default function AdminUsersCrudTab({
     setFormPassword('');
     setFormName(u.full_name);
     setFormNim(u.nim || '');
-    setFormClass(u.class_name || classes[0]?.name || '');
+    setFormClass(u.class_name || '');
     setFormPhone(u.phone || '');
     setFormActive(u.is_active);
     setShowUserModal(true);
@@ -119,13 +132,15 @@ export default function AdminUsersCrudTab({
     setSavingUser(true);
 
     try {
+      const normalizedClass =
+        formRole === 'student' ? formClass.trim().replace(/\s+/g, ' ') : '';
       if (editingUser) {
         const { error } = await supabase.rpc('admin_update_user', {
           p_user_id: editingUser.id,
           p_full_name: formName.trim(),
           p_role: formRole,
           p_nim: formRole === 'student' ? formNim.trim() : formNim.trim() || null,
-          p_class_name: formRole === 'student' ? formClass : '',
+          p_class_name: normalizedClass,
           p_phone: formPhone.trim(),
           p_is_active: formActive,
           p_new_email: formEmail.trim().toLowerCase(),
@@ -143,7 +158,7 @@ export default function AdminUsersCrudTab({
           p_full_name: formName.trim(),
           p_role: formRole,
           p_nim: formRole === 'student' ? formNim.trim() : formNim.trim() || null,
-          p_class_name: formRole === 'student' ? formClass : '',
+          p_class_name: normalizedClass,
           p_phone: formPhone.trim(),
         });
         if (error) throw error;
@@ -210,11 +225,12 @@ export default function AdminUsersCrudTab({
       const email =
         parts[2] ||
         `${nim.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}@mahasiswa.medika.ac.id`;
+      const rowClass = (parts[3] || bulkClass).trim().replace(/\s+/g, ' ');
       return {
         nim,
         full_name,
         email,
-        class_name: bulkClass,
+        class_name: rowClass,
         password: bulkDefaultPassword,
       };
     });
@@ -295,7 +311,7 @@ export default function AdminUsersCrudTab({
             <button
               type="button"
               onClick={() => {
-                setBulkClass(classes[0]?.name || '');
+                setBulkClass('');
                 setShowBulkModal(true);
               }}
               className="px-3.5 py-2.5 rounded-xl bg-clinical-50 border border-clinical-200 hover:bg-clinical-100 text-clinical-800 text-xs font-extrabold flex items-center gap-1.5 transition"
@@ -352,9 +368,9 @@ export default function AdminUsersCrudTab({
               className="px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-700 outline-none focus:border-medika-600"
             >
               <option value="ALL">Semua Kelas</option>
-              {classes.map((c) => (
-                <option key={c.id} value={c.name}>
-                  {c.name}
+              {availableClassNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
                 </option>
               ))}
             </select>
@@ -595,19 +611,14 @@ export default function AdminUsersCrudTab({
                     <label className="block text-xs font-bold uppercase text-slate-600 mb-1">
                       Kelas *
                     </label>
-                    <select
+                    <input
+                      type="text"
                       required
                       value={formClass}
                       onChange={(e) => setFormClass(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm outline-none focus:border-medika-600"
-                    >
-                      <option value="">-- Pilih Kelas --</option>
-                      {classes.map((c) => (
-                        <option key={c.id} value={c.name}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Ketik kelas (misal: 1A)"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:border-medika-600"
+                    />
                   </div>
                 </div>
               )}
@@ -689,20 +700,16 @@ export default function AdminUsersCrudTab({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-600 mb-1">
-                    Target Kelas *
+                    Nama Kelas Default *
                   </label>
-                  <select
+                  <input
+                    type="text"
                     required
                     value={bulkClass}
                     onChange={(e) => setBulkClass(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm font-semibold outline-none focus:border-medika-600"
-                  >
-                    {classes.map((c) => (
-                      <option key={c.id} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Ketik nama kelas (misal: 1A)"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold outline-none focus:border-medika-600"
+                  />
                 </div>
 
                 <div>
