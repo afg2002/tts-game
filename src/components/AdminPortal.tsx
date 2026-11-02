@@ -23,7 +23,7 @@ import {
   Stethoscope,
   Users,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { SUPABASE_GOOGLE_CALLBACK_URL, supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import {
   QuizAttempt,
@@ -60,10 +60,12 @@ export default function AdminPortal() {
     settings,
     classes,
     materials,
+    googleProviderEnabled,
     signOut,
     refreshSettings,
     refreshClasses,
     refreshMaterials,
+    refreshAuthProviders,
   } = useAuth();
 
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
@@ -1270,6 +1272,66 @@ export default function AdminPortal() {
                   </button>
                 </div>
               </form>
+
+              {/* Google OAuth Provider Live Status & Setup Guide */}
+              <div className="mt-8 pt-6 border-t border-slate-200">
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-extrabold text-slate-900">
+                        Integrasi Login Google (OAuth 2.0)
+                      </span>
+                      {googleProviderEnabled ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                          Aktif di Supabase ✓
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
+                          Belum Diaktifkan di Supabase (Tombol Google Disembunyikan Otomatis)
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => refreshAuthProviders()}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center gap-1.5 transition"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Cek Ulang Status
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Selama provider Google belum diaktifkan di Dashboard Supabase, tombol{' '}
+                    <b>Lanjutkan dengan Google</b> disembunyikan otomatis agar mahasiswa tidak
+                    mengalami error saat login. Begitu diaktifkan, tombol Google langsung muncul
+                    otomatis tanpa perlu deploy ulang.
+                  </p>
+
+                  {!googleProviderEnabled && (
+                    <div className="text-xs text-slate-700 bg-white border border-slate-200 rounded-xl p-3.5 space-y-1.5">
+                      <div className="font-bold text-slate-900">
+                        Cara Mengaktifkan Login Google (Opsional):
+                      </div>
+                      <div>
+                        1. Buka <b>Google Cloud Console → APIs &amp; Services → Credentials</b>,
+                        buat <b>OAuth 2.0 Client ID (Web application)</b>.
+                      </div>
+                      <div>
+                        2. Isi <b>Authorized Redirect URI</b> dengan:{' '}
+                        <code className="px-2 py-0.5 rounded bg-slate-100 font-mono text-[11px] select-all">
+                          {SUPABASE_GOOGLE_CALLBACK_URL}
+                        </code>
+                      </div>
+                      <div>
+                        3. Buka <b>Supabase Dashboard → Authentication → Providers → Google</b>,
+                        aktifkan toggle <b>Enable Sign in with Google</b>, tempel{' '}
+                        <i>Client ID</i> &amp; <i>Client Secret</i>, lalu klik <b>Save</b>.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <ProfilePanel />
