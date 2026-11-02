@@ -21,6 +21,7 @@ export default function AuthScreen() {
   const {
     settings,
     classes,
+    googleProviderEnabled,
     signInWithIdentifier,
     registerStudent,
     signInWithGoogle,
@@ -315,46 +316,50 @@ export default function AuthScreen() {
                 {submitting ? 'Memverifikasi Akun...' : 'Masuk ke Portal Evaluasi'}
               </button>
 
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-3 text-slate-400 font-semibold">
-                    Atau masuk dengan
-                  </span>
-                </div>
-              </div>
+              {googleProviderEnabled && (
+                <>
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-200" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-3 text-slate-400 font-semibold">
+                        Atau masuk dengan
+                      </span>
+                    </div>
+                  </div>
 
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                disabled={submitting}
-                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm flex items-center justify-center gap-2.5 transition"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path
-                    fill="#EA4335"
-                    d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"
-                  />
-                  <path
-                    fill="#4285F4"
-                    d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.3 14.2c-.2-.7-.4-1.4-.4-2.2s.2-1.5.4-2.2L1.6 7C.6 9 0 11.2 0 12s.6 3 1.6 5l3.7-2.8z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c3 0 5.5-1 7.3-2.7l-3.7-2.9c-1 .7-2.2 1.1-3.6 1.1-3.1 0-5.8-2.1-6.7-5L1.6 16.3C3.5 20.4 7.4 23 12 23z"
-                  />
-                </svg>
-                <span>Lanjutkan dengan Google</span>
-              </button>
-              <p className="text-[11px] text-center text-slate-400">
-                Pengguna baru wajib melengkapi identitas Nama, NIM, & Kelas saat pertama masuk.
-              </p>
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    disabled={submitting}
+                    className="w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm flex items-center justify-center gap-2.5 transition"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path
+                        fill="#EA4335"
+                        d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"
+                      />
+                      <path
+                        fill="#4285F4"
+                        d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.3 14.2c-.2-.7-.4-1.4-.4-2.2s.2-1.5.4-2.2L1.6 7C.6 9 0 11.2 0 12s.6 3 1.6 5l3.7-2.8z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23c3 0 5.5-1 7.3-2.7l-3.7-2.9c-1 .7-2.2 1.1-3.6 1.1-3.1 0-5.8-2.1-6.7-5L1.6 16.3C3.5 20.4 7.4 23 12 23z"
+                      />
+                    </svg>
+                    <span>Lanjutkan dengan Google</span>
+                  </button>
+                  <p className="text-[11px] text-center text-slate-400">
+                    Pengguna baru wajib melengkapi identitas Nama, NIM, & Kelas saat pertama masuk.
+                  </p>
+                </>
+              )}
             </form>
           ) : (
             <form onSubmit={handleRegister} className="space-y-3.5">

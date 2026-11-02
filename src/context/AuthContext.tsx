@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { fetchGoogleProviderStatus, supabase } from '@/lib/supabase';
 import { FALLBACK_PUBLIC_MATERIALS } from '@/data/fallbackMaterials';
 import {
   AppSettings,
@@ -39,6 +39,7 @@ interface AuthContextValue {
   settings: AppSettings;
   classes: ClassItem[];
   materials: QuizMaterial[];
+  googleProviderEnabled: boolean;
   loading: boolean;
   signInWithIdentifier: (identifier: string, password: string) => Promise<void>;
   registerStudent: (input: RegisterStudentInput) => Promise<void>;
@@ -54,6 +55,7 @@ interface AuthContextValue {
   refreshSettings: () => Promise<void>;
   refreshClasses: () => Promise<void>;
   refreshMaterials: () => Promise<void>;
+  refreshAuthProviders: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -67,7 +69,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [materials, setMaterials] = useState<QuizMaterial[]>(
     FALLBACK_PUBLIC_MATERIALS as unknown as QuizMaterial[]
   );
+  const [googleProviderEnabled, setGoogleProviderEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const refreshAuthProviders = useCallback(async () => {
+    const enabled = await fetchGoogleProviderStatus();
+    setGoogleProviderEnabled(enabled);
+    return enabled;
+  }, []);
 
   const refreshSettings = useCallback(async () => {
     const { data } = await supabase
@@ -155,7 +164,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function bootstrap() {
       try {
-        await Promise.all([refreshSettings(), refreshClasses(), refreshMaterials()]);
+        await Promise.all([
+          refreshSettings(),
+          refreshClasses(),
+          refreshMaterials(),
+          refreshAuthProviders(),
+        ]);
         const {
           data: { session: initialSession },
         } = await supabase.auth.getSession();
@@ -200,7 +214,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserProfile, refreshClasses, refreshMaterials, refreshSettings]);
+  }, [
+    fetchUserProfile,
+    refreshAuthProviders,
+    refreshClasses,
+    refreshMaterials,
+    refreshSettings,
+  ]);
 
   const signInWithIdentifier = async (identifier: string, password: string) => {
     const clean = identifier.trim();
@@ -300,15 +320,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const enabled = await refreshAuthProviders();
+    if (!enabled) {
+      throw new Error(
+        'Provider Login Google belum diaktifkan di Supabase Dashboard (Authentication → Providers → Google). Silakan masuk menggunakan Email / NIM dan Password.'
+      );
+    }
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+        skipBrowserRedirect: true,
       },
     });
 
     if (error) {
       throw new Error(error.message);
+    }
+
+    if (data?.url && typeof window !== 'undefined') {
+      window.location.assign(data.url);
     }
   };
 
@@ -375,6 +407,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         settings,
         classes,
         materials,
+        googleProviderEnabled,
         loading,
         signInWithIdentifier,
         registerStudent,
@@ -385,6 +418,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshSettings,
         refreshClasses,
         refreshMaterials,
+        refreshAuthProviders,
       }}
     >
       {children}
