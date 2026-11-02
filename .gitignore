@@ -1,12 +1,11 @@
-# OS
+node_modules
+.next
+out
+dist
+*.local
+.env
+.env.*
+!.env.example
 .DS_Store
-Thumbs.db
-
-# Editors
-.vscode/
-.idea/
-
-# Temporary files
-*.tmp
-*.bak
-*.swp
+next-env.d.ts
+Unselected files
