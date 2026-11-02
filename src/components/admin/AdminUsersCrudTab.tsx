@@ -91,7 +91,7 @@ export default function AdminUsersCrudTab({
     setEditingUser(null);
     setFormRole(defaultRole);
     setFormEmail('');
-    setFormPassword(defaultRole === 'admin' ? 'AdminMedika2026!' : 'Medika2026!');
+    setFormPassword('');
     setFormName('');
     setFormNim('');
     setFormClass(defaultRole === 'student' ? classes[0]?.name || '' : '');
