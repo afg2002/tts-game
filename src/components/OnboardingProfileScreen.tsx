@@ -5,14 +5,11 @@ import { AlertCircle, ClipboardCheck, LogOut, Stethoscope } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function OnboardingProfileScreen() {
-  const { profile, classes, settings, completeStudentOnboarding, signOut } = useAuth();
-  const activeClasses = classes.filter((c) => c.is_active);
+  const { profile, settings, completeStudentOnboarding, signOut } = useAuth();
 
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [nim, setNim] = useState(profile?.nim || '');
-  const [className, setClassName] = useState(
-    profile?.class_name || activeClasses[0]?.name || ''
-  );
+  const [className, setClassName] = useState(profile?.class_name || '');
   const [phone, setPhone] = useState(profile?.phone || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,11 +27,13 @@ export default function OnboardingProfileScreen() {
       await completeStudentOnboarding({
         fullName,
         nim,
-        className,
+        className: className.trim(),
         phone,
       });
-    } catch (err: any) {
-      setError(err?.message || 'Gagal menyimpan identitas mahasiswa.');
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : 'Gagal menyimpan identitas mahasiswa.'
+      );
     } finally {
       setSaving(false);
     }
@@ -85,7 +84,7 @@ export default function OnboardingProfileScreen() {
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Contoh: Siti Nurhaliza"
+              placeholder="Masukkan nama lengkap Anda"
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-medika-600 focus:ring-4 focus:ring-medika-500/15 outline-none text-sm"
             />
           </div>
@@ -99,7 +98,7 @@ export default function OnboardingProfileScreen() {
               required
               value={nim}
               onChange={(e) => setNim(e.target.value.toUpperCase())}
-              placeholder="Contoh: 2410711030"
+              placeholder="Masukkan NIM Anda"
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-medika-600 focus:ring-4 focus:ring-medika-500/15 outline-none text-sm font-mono"
             />
           </div>
@@ -108,32 +107,14 @@ export default function OnboardingProfileScreen() {
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Kelas Perkuliahan <span className="text-rose-600">*</span>
             </label>
-            {activeClasses.length > 0 ? (
-              <select
-                required
-                value={className}
-                onChange={(e) => setClassName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-medika-600 focus:ring-4 focus:ring-medika-500/15 outline-none text-sm bg-white"
-              >
-                <option value="" disabled>
-                  -- Pilih Kelas Anda --
-                </option>
-                {activeClasses.map((cls) => (
-                  <option key={cls.id} value={cls.name}>
-                    {cls.name} {cls.semester ? `(${cls.semester})` : ''}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                required
-                value={className}
-                onChange={(e) => setClassName(e.target.value)}
-                placeholder="Contoh: S1 Keperawatan - Kelas 1A"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-medika-600 focus:ring-4 focus:ring-medika-500/15 outline-none text-sm"
-              />
-            )}
+            <input
+              type="text"
+              required
+              value={className}
+              onChange={(e) => setClassName(e.target.value)}
+              placeholder="Ketik kelas Anda (misal: 1A)"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-medika-600 focus:ring-4 focus:ring-medika-500/15 outline-none text-sm"
+            />
           </div>
 
           <div>

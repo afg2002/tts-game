@@ -24,8 +24,7 @@ const AVATAR_COLORS = [
 ];
 
 export default function ProfilePanel() {
-  const { profile, classes, refreshProfile } = useAuth();
-  const activeClasses = classes.filter((c) => c.is_active);
+  const { profile, refreshProfile } = useAuth();
 
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [nim, setNim] = useState(profile?.nim || '');
@@ -88,9 +87,9 @@ export default function ProfilePanel() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          full_name: fullName.trim(),
+          full_name: fullName.trim().replace(/\s+/g, ' '),
           nim: nim.trim() ? nim.trim().toUpperCase() : null,
-          class_name: className.trim(),
+          class_name: className.trim().replace(/\s+/g, ' '),
           phone: phone.trim(),
           avatar_color: avatarColor,
         })
@@ -215,24 +214,14 @@ export default function ProfilePanel() {
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                   Kelas <span className="text-rose-600">*</span>
                 </label>
-                <select
+                <input
+                  type="text"
                   required
                   value={className}
                   onChange={(e) => setClassName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-medika-600 focus:ring-4 focus:ring-medika-500/15 outline-none text-sm bg-white"
-                >
-                  <option value="" disabled>
-                    -- Pilih Kelas --
-                  </option>
-                  {activeClasses.map((c) => (
-                    <option key={c.id} value={c.name}>
-                      {c.name}
-                    </option>
-                  ))}
-                  {className && !activeClasses.some((c) => c.name === className) && (
-                    <option value={className}>{className}</option>
-                  )}
-                </select>
+                  placeholder="Ketik kelas Anda"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-medika-600 focus:ring-4 focus:ring-medika-500/15 outline-none text-sm"
+                />
               </div>
             </div>
           ) : (

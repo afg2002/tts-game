@@ -261,9 +261,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const registerStudent = async (input: RegisterStudentInput) => {
     const cleanEmail = input.email.trim().toLowerCase();
-    const cleanName = input.fullName.trim();
+    const cleanName = input.fullName.trim().replace(/\s+/g, ' ');
     const cleanNim = input.nim.trim().toUpperCase();
-    const cleanClass = input.className.trim();
+    const cleanClass = input.className.trim().replace(/\s+/g, ' ');
     const cleanPhone = (input.phone || '').trim();
 
     if (!cleanName || !cleanNim || !cleanClass) {
@@ -357,9 +357,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }) => {
     if (!user) throw new Error('Sesi pengguna tidak ditemukan.');
 
-    const cleanName = fullName.trim();
+    const cleanName = fullName.trim().replace(/\s+/g, ' ');
     const cleanNim = nim.trim().toUpperCase();
-    const cleanClass = className.trim();
+    const cleanClass = className.trim().replace(/\s+/g, ' ');
 
     if (!cleanName || !cleanNim || !cleanClass) {
       throw new Error('Nama Lengkap, NIM, dan Kelas wajib diisi.');

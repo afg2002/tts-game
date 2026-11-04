@@ -162,6 +162,24 @@ export default function AdminPortal() {
     [profiles]
   );
 
+  // Dynamically aggregate every unique class name typed by students
+  const availableClassNames = useMemo(() => {
+    const names = new Set<string>();
+    students.forEach((s) => {
+      const clean = (s.class_name || '').trim();
+      if (clean) names.add(clean);
+    });
+    attempts.forEach((a) => {
+      const clean = (a.student_class_snapshot || '').trim();
+      if (clean) names.add(clean);
+    });
+    classes.forEach((c) => {
+      const clean = (c.name || '').trim();
+      if (clean) names.add(clean);
+    });
+    return Array.from(names).sort((a, b) => a.localeCompare(b, 'id'));
+  }, [attempts, classes, students]);
+
   // Map user_id -> material_index -> QuizAttempt
   const attemptsByUserAndMat = useMemo(() => {
     const map = new Map<string, Map<number, QuizAttempt>>();
@@ -422,7 +440,7 @@ export default function AdminPortal() {
                   {overviewStats.totalStudents}
                 </div>
                 <div className="text-xs text-slate-500 mt-1">
-                  Tersebar di <b>{classes.length}</b> kelas keperawatan
+                  Tersebar di <b>{availableClassNames.length}</b> kelas keperawatan
                 </div>
               </div>
 
@@ -517,60 +535,72 @@ export default function AdminPortal() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {classes.map((cls) => {
-                        const clsStudents = students.filter(
-                          (s) => s.class_name === cls.name
-                        );
-                        const clsStudentIds = new Set(clsStudents.map((s) => s.id));
-                        const started = clsStudents.filter(
-                          (s) => (attemptsByUserAndMat.get(s.id)?.size || 0) > 0
-                        ).length;
-                        const notStarted = clsStudents.length - started;
-                        const clsAttempts = attempts.filter(
-                          (a) =>
-                            clsStudentIds.has(a.user_id) ||
-                            a.student_class_snapshot === cls.name
-                        );
-                        const avg =
-                          clsAttempts.length > 0
-                            ? (
-                                clsAttempts.reduce((acc, a) => acc + Number(a.score), 0) /
-                                clsAttempts.length
-                              ).toFixed(1)
-                            : '-';
+                      {availableClassNames.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={6}
+                            className="py-8 px-4 text-center text-xs sm:text-sm text-slate-400"
+                          >
+                            Belum ada data kelas. Nama kelas akan otomatis muncul begitu
+                            mahasiswa mendaftar dan mengisi kelasnya.
+                          </td>
+                        </tr>
+                      ) : (
+                        availableClassNames.map((className) => {
+                          const clsStudents = students.filter(
+                            (s) => (s.class_name || '').trim() === className
+                          );
+                          const clsStudentIds = new Set(clsStudents.map((s) => s.id));
+                          const started = clsStudents.filter(
+                            (s) => (attemptsByUserAndMat.get(s.id)?.size || 0) > 0
+                          ).length;
+                          const notStarted = clsStudents.length - started;
+                          const clsAttempts = attempts.filter(
+                            (a) =>
+                              clsStudentIds.has(a.user_id) ||
+                              (a.student_class_snapshot || '').trim() === className
+                          );
+                          const avg =
+                            clsAttempts.length > 0
+                              ? (
+                                  clsAttempts.reduce((acc, a) => acc + Number(a.score), 0) /
+                                  clsAttempts.length
+                                ).toFixed(1)
+                              : '-';
 
-                        return (
-                          <tr key={cls.id} className="hover:bg-slate-50/80">
-                            <td className="py-3 px-4 font-bold text-slate-900">
-                              {cls.name}
-                            </td>
-                            <td className="py-3 px-3 text-center font-mono">
-                              {clsStudents.length}
-                            </td>
-                            <td className="py-3 px-3 text-center font-bold text-emerald-700">
-                              {started}
-                            </td>
-                            <td className="py-3 px-3 text-center font-bold text-rose-600">
-                              {notStarted}
-                            </td>
-                            <td className="py-3 px-3 text-center font-extrabold text-medika-700">
-                              {avg}
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedClass(cls.name);
-                                  setActiveTab('reports');
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-medika-50 hover:bg-medika-100 text-medika-800 border border-medika-200 text-xs font-bold transition"
-                              >
-                                Nilai Kelas
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                          return (
+                            <tr key={className} className="hover:bg-slate-50/80">
+                              <td className="py-3 px-4 font-bold text-slate-900">
+                                {className}
+                              </td>
+                              <td className="py-3 px-3 text-center font-mono">
+                                {clsStudents.length}
+                              </td>
+                              <td className="py-3 px-3 text-center font-bold text-emerald-700">
+                                {started}
+                              </td>
+                              <td className="py-3 px-3 text-center font-bold text-rose-600">
+                                {notStarted}
+                              </td>
+                              <td className="py-3 px-3 text-center font-extrabold text-medika-700">
+                                {avg}
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedClass(className);
+                                    setActiveTab('reports');
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-medika-50 hover:bg-medika-100 text-medika-800 border border-medika-200 text-xs font-bold transition"
+                                >
+                                  Nilai Kelas
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -778,9 +808,9 @@ export default function AdminPortal() {
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-800 outline-none focus:border-medika-600"
                   >
                     <option value="ALL">Semua Kelas ({students.length} Mahasiswa)</option>
-                    {classes.map((c) => (
-                      <option key={c.id} value={c.name}>
-                        {c.name}
+                    {availableClassNames.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
                       </option>
                     ))}
                   </select>

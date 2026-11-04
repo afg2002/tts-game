@@ -20,14 +20,11 @@ import { useAuth } from '@/context/AuthContext';
 export default function AuthScreen() {
   const {
     settings,
-    classes,
     googleProviderEnabled,
     signInWithIdentifier,
     registerStudent,
     signInWithGoogle,
   } = useAuth();
-
-  const activeClasses = classes.filter((c) => c.is_active);
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [identifier, setIdentifier] = useState('');
@@ -37,7 +34,7 @@ export default function AuthScreen() {
   // Register fields
   const [regName, setRegName] = useState('');
   const [regNim, setRegNim] = useState('');
-  const [regClass, setRegClass] = useState(activeClasses[0]?.name || '');
+  const [regClass, setRegClass] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
@@ -66,7 +63,7 @@ export default function AuthScreen() {
     setError(null);
     setInfoMessage(null);
 
-    if (!regName.trim() || !regNim.trim() || !(regClass || activeClasses[0]?.name)) {
+    if (!regName.trim() || !regNim.trim() || !regClass.trim()) {
       setError('Nama Lengkap, NIM, dan Kelas wajib diisi lengkap.');
       return;
     }
@@ -86,7 +83,7 @@ export default function AuthScreen() {
         password: regPassword,
         fullName: regName,
         nim: regNim,
-        className: regClass || activeClasses[0]?.name || '',
+        className: regClass.trim(),
         phone: regPhone,
       });
     } catch (err: unknown) {
@@ -238,7 +235,6 @@ export default function AuthScreen() {
                 onClick={() => {
                   setMode('register');
                   setError(null);
-                  if (!regClass && activeClasses[0]) setRegClass(activeClasses[0].name);
                 }}
                 className={`py-2.5 text-sm font-bold rounded-lg transition-all ${
                   mode === 'register'
@@ -396,21 +392,14 @@ export default function AuthScreen() {
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                     Kelas (Wajib) <span className="text-rose-600">*</span>
                   </label>
-                  <select
+                  <input
+                    type="text"
                     required
                     value={regClass}
                     onChange={(e) => setRegClass(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-medika-600 focus:ring-4 focus:ring-medika-500/15 outline-none text-sm bg-white"
-                  >
-                    <option value="" disabled>
-                      -- Pilih Kelas --
-                    </option>
-                    {activeClasses.map((cls) => (
-                      <option key={cls.id} value={cls.name}>
-                        {cls.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Ketik kelas Anda (misal: 1A)"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-medika-600 focus:ring-4 focus:ring-medika-500/15 outline-none text-sm"
+                  />
                 </div>
               </div>
 
